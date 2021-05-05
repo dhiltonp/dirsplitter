@@ -5,6 +5,8 @@ use structopt::StructOpt;
 struct Cli {
     #[structopt(parse(from_os_str))]
     path: path::PathBuf,
+    // add prefix
+    // add number of images per dir
 }
 
 // struct Contents{
@@ -14,7 +16,25 @@ struct Cli {
 
 fn read_dirs(path: path::PathBuf) -> Vec<path::PathBuf> {
     let mut subdirs = Vec::new();
-    subdirs.push(path);
+    if let Ok(entries) = fs::read_dir(path) {
+        for entry in entries {
+            if let Ok(entry) = entry {
+                println!("{:?}", entry.path());
+                if entry.file_type().unwrap().is_dir() {
+                    subdirs.push(entry.path());
+                } else if entry.file_type().unwrap().is_file() {
+                    if entry.path().ends_with("jpg") {
+                        println!("image found");
+                        subdirs.push(entry.path());
+                    }
+                } else {
+                    println!("invalid data");
+                }
+            }
+        }
+    }
+
+    // for entry in fs::read_dir(args.path)
     subdirs
 }
 
@@ -23,9 +43,5 @@ fn main() {
     println!("{:?}", args.path);
     println!("{:?}", read_dirs(args.path));
     // fs::create_dir(args.path);
-    // for entry in fs::read_dir(args.path) {
-    //     // let path = entry.path();
-    //     println!("{:?}", entry);
-    // }
     println!("Hello, world!");
 }
