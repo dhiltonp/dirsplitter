@@ -6,7 +6,7 @@ use structopt::StructOpt;
 struct Cli {
     #[structopt(parse(from_os_str))]
     path: path::PathBuf,
-    // add prefix
+    // add subdir prefix
     // add number of images per dir
 }
 
@@ -20,7 +20,7 @@ struct DirContents {
 fn is_image(file: path::PathBuf) -> bool {
     let image_types = ["jpg", "jpeg", "png"];
 
-    let mut extension = match file.extension() {
+    let extension = match file.extension() {
         Some(extension) => extension.to_ascii_lowercase(),
         _ => return false,
     };
@@ -48,9 +48,13 @@ fn read_dir(path: path::PathBuf) -> DirContents {
     if let Ok(entries) = fs::read_dir(path) {
         for entry in entries {
             if let Ok(entry) = entry {
-                if entry.file_type().unwrap().is_dir() {
+                let file_type = match entry.file_type() {
+                    Ok(file_type) => file_type,
+                    _ => continue,
+                };
+                if file_type.is_dir() {
                     subdirs.push(entry.path());
-                } else if entry.file_type().unwrap().is_file() && is_image(entry.path()) {
+                } else if file_type.is_file() && is_image(entry.path()) {
                     images.push(entry.path());
                 }
             }
