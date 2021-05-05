@@ -46,24 +46,19 @@ fn read_dir(path: path::PathBuf) -> DirContents {
     let mut subdirs = Vec::new();
     let mut images = Vec::new();
     if let Ok(entries) = fs::read_dir(path) {
-        for entry in entries {
-            if let Ok(entry) = entry {
-                let file_type = match entry.file_type() {
-                    Ok(file_type) => file_type,
-                    _ => continue,
-                };
-                if file_type.is_dir() {
-                    subdirs.push(entry.path());
-                } else if file_type.is_file() && is_image(entry.path()) {
-                    images.push(entry.path());
-                }
+        for entry in entries.flatten() {
+            let file_type = match entry.file_type() {
+                Ok(file_type) => file_type,
+                _ => continue,
+            };
+            if file_type.is_dir() {
+                subdirs.push(entry.path());
+            } else if file_type.is_file() && is_image(entry.path()) {
+                images.push(entry.path());
             }
         }
     }
-    DirContents {
-        subdirs: subdirs,
-        images: images,
-    }
+    DirContents { subdirs, images }
 }
 
 fn main() {
