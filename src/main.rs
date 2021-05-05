@@ -1,3 +1,4 @@
+use log;
 use std::ffi::OsStr;
 use std::{fs, path};
 use structopt::StructOpt;
@@ -73,26 +74,26 @@ fn read_dir(path: &path::PathBuf) -> DirContents {
 
 fn split_dir(dir_contents: DirContents, args: Cli) {
     if dir_contents.images.len() > args.images_per_dir {
-        let mut new_dir_index = 0;
+        let mut split_dir_index = 0;
         // I do not think initializing new_dir_path is necessary, but rust says it is.
         //  Perhaps I have a flaw in my logic.
-        let mut new_dir_path = path::PathBuf::from(&dir_contents.path);
-        new_dir_path.push("uninitialized");
+        let mut split_dir_path = path::PathBuf::from(&dir_contents.path);
+        split_dir_path.push("uninitialized");
         for i in 0..dir_contents.images.len() {
             // create subdirs
             if i % args.images_per_dir == 0 {
                 loop {
-                    new_dir_index += 1;
-                    let dir_name = format!("{}-{}", args.subdir_prefix, new_dir_index);
+                    split_dir_index += 1;
+                    let dir_name = format!("{}-{}", args.subdir_prefix, split_dir_index);
 
-                    new_dir_path = path::PathBuf::from(&dir_contents.path);
-                    new_dir_path.push(dir_name);
-                    if new_dir_path.exists() {
+                    split_dir_path = path::PathBuf::from(&dir_contents.path);
+                    split_dir_path.push(dir_name);
+                    if split_dir_path.exists() {
                         continue;
                     }
-                    match fs::create_dir(&new_dir_path) {
+                    match fs::create_dir(&split_dir_path) {
                         Ok(_) => break,
-                        _ => panic!("Unable to create dir {:?}", new_dir_path),
+                        _ => panic!("Unable to create dir {:?}", split_dir_path),
                     }
                 }
             }
@@ -102,7 +103,7 @@ fn split_dir(dir_contents: DirContents, args: Cli) {
                 Some(file_name) => file_name,
                 _ => continue,
             };
-            let mut new_path = path::PathBuf::from(&new_dir_path);
+            let mut new_path = path::PathBuf::from(&split_dir_path);
             new_path.push(file_name);
 
             match fs::rename(&current_path, &new_path) {
@@ -113,6 +114,61 @@ fn split_dir(dir_contents: DirContents, args: Cli) {
                 ),
             }
         }
+    }
+}
+
+fn unsplit_dir(dir_contents: DirContents, args: Cli) {
+    let mut split_dir_index = 0;
+    // I do not think initializing new_dir_path is necessary, but rust says it is.
+    //  Perhaps I have a flaw in my logic.
+    // Because it's in unsplit_dir, I need to look for it just in case...
+    let mut split_dir_path = path::PathBuf::from(&dir_contents.path);
+    split_dir_path.push("uninitialized");
+
+    let max_missing = 50;
+    let mut missing = 0;
+    loop {
+        if split_dir_path.exists() {
+            println!("unsplitting dir");
+            let split_contents = read_dir(&split_dir_path);
+            for image_path in split_contents.images {
+                // generate new path
+                let file_name = match image_path.file_name() {
+                    Some(file_name) => file_name,
+                    _ => continue,
+                };
+                let mut new_path = path::PathBuf::from(&dir_contents.path);
+                new_path.push(file_name);
+
+                // generate old path
+                match fs::rename(&image_path, &new_path) {
+                    Ok(_) => (),
+                    _ => {
+                        log::error!(
+                            "unable to move image from {:?} to {:?}",
+                            image_path,
+                            new_path
+                        );
+                        continue;
+                    }
+                }
+            }
+            match fs::remove_dir(&split_dir_path) {
+                Ok(_) => (),
+                _ => log::error!("unable to remove directory {:?}", split_dir_path),
+            }
+        } else {
+            missing += 1;
+            if missing > max_missing {
+                return;
+            }
+        }
+        // generate the next directory name
+        split_dir_index += 1;
+        let dir_name = format!("{}-{}", args.subdir_prefix, split_dir_index);
+
+        split_dir_path = path::PathBuf::from(&dir_contents.path);
+        split_dir_path.push(dir_name);
     }
 }
 
