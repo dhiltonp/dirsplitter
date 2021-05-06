@@ -21,7 +21,8 @@ fn split_dir(args: Cli) {
     if images.len() > args.images_per_dir {
         let mut split_dir_index = 0;
         // I do not think initializing new_dir_path is necessary, but rust says it is.
-        //  Perhaps I have a flaw in my logic.
+        //  Perhaps I have a flaw in my logic. Maybe this would be better with a
+        //  generator function?
         let mut split_dir_path = path::PathBuf::from(&args.dir);
         split_dir_path.push("uninitialized");
         for i in 0..images.len() {
@@ -44,19 +45,17 @@ fn split_dir(args: Cli) {
             }
             // move files to the new dir
             let current_path = &images[i];
-            let file_name = match current_path.file_name() {
-                Some(file_name) => file_name,
-                _ => continue,
-            };
-            let mut new_path = path::PathBuf::from(&split_dir_path);
-            new_path.push(file_name);
+            if let Some(file_name) = current_path.file_name() {
+                let mut new_path = path::PathBuf::from(&split_dir_path);
+                new_path.push(file_name);
 
-            match fs::rename(&current_path, &new_path) {
-                Ok(_) => (),
-                _ => panic!(
-                    "unable to move image from {:?} to {:?}",
-                    current_path, new_path
-                ),
+                match fs::rename(&current_path, &new_path) {
+                    Ok(_) => (),
+                    _ => panic!(
+                        "unable to move image from {:?} to {:?}",
+                        current_path, new_path
+                    ),
+                }
             }
         }
     }
