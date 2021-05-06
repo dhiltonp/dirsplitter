@@ -26,7 +26,11 @@ fn unsplit_dir(args: Cli) {
                         match fs::rename(&image, &new_path) {
                             Ok(_) => (),
                             _ => {
-                                log::error!("unable to move image from {:?} to {:?}", image, new_path);
+                                log::error!(
+                                    "unable to move image from {:?} to {:?}",
+                                    image,
+                                    new_path
+                                );
                                 continue;
                             }
                         }
