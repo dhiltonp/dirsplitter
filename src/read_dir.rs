@@ -21,10 +21,10 @@ fn is_image(file: &path::Path) -> bool {
 
 #[test]
 fn test_is_image() {
-    assert!(is_image(&path::PathBuf::from("foo")) == false);
-    assert!(is_image(&path::PathBuf::from("jpg")) == false);
-    assert!(is_image(&path::PathBuf::from("blah.jpg")) == true);
-    assert!(is_image(&path::PathBuf::from("blah.JPG")) == true);
+    assert_eq!(is_image(&path::PathBuf::from("foo")), false);
+    assert_eq!(is_image(&path::PathBuf::from("jpg")), false);
+    assert_eq!(is_image(&path::PathBuf::from("blah.jpg")), true);
+    assert_eq!(is_image(&path::PathBuf::from("blah.JPG")), true);
 }
 
 pub fn images(path: &path::Path) -> Vec<path::PathBuf> {
