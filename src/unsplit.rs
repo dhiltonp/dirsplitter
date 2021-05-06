@@ -36,7 +36,7 @@ fn unsplit_dir(dir_contents: read_dir::DirContents, args: Cli) {
                 let mut new_path = path::PathBuf::from(&dir_contents.path);
                 new_path.push(file_name);
 
-                // generate old path
+                // move
                 match fs::rename(&image_path, &new_path) {
                     Ok(_) => (),
                     _ => {
@@ -69,8 +69,7 @@ fn unsplit_dir(dir_contents: read_dir::DirContents, args: Cli) {
 }
 
 /// Read a directory
-/// If there are < images_per_dir in that dir, leave it alone.
-/// Otherwise, split the dir.
+/// unsplit it based on directory names.
 fn main() {
     let args = Cli::from_args();
     let dir_contents = read_dir::read_dir(&args.path);
