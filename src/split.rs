@@ -6,7 +6,7 @@ use structopt::StructOpt;
 #[derive(StructOpt)]
 struct Cli {
     #[structopt(parse(from_os_str))]
-    path: path::PathBuf,
+    dir: path::PathBuf,
 
     #[structopt(default_value = "splitter")]
     subdir_prefix: String,
@@ -16,21 +16,22 @@ struct Cli {
     // todo: add recursive mode
 }
 
-fn split_dir(dir_contents: read_dir::DirContents, args: Cli) {
-    if dir_contents.images.len() > args.images_per_dir {
+fn split_dir(args: Cli) {
+    let images = read_dir::images(&args.dir);
+    if images.len() > args.images_per_dir {
         let mut split_dir_index = 0;
         // I do not think initializing new_dir_path is necessary, but rust says it is.
         //  Perhaps I have a flaw in my logic.
-        let mut split_dir_path = path::PathBuf::from(&dir_contents.path);
+        let mut split_dir_path = path::PathBuf::from(&args.dir);
         split_dir_path.push("uninitialized");
-        for i in 0..dir_contents.images.len() {
+        for i in 0..images.len() {
             // create subdirs
             if i % args.images_per_dir == 0 {
                 loop {
                     split_dir_index += 1;
                     let dir_name = format!("{}{}", args.subdir_prefix, split_dir_index);
 
-                    split_dir_path = path::PathBuf::from(&dir_contents.path);
+                    split_dir_path = path::PathBuf::from(&args.dir);
                     split_dir_path.push(dir_name);
                     if split_dir_path.exists() {
                         continue;
@@ -42,7 +43,7 @@ fn split_dir(dir_contents: read_dir::DirContents, args: Cli) {
                 }
             }
             // move files to the new dir
-            let current_path = &dir_contents.images[i];
+            let current_path = &images[i];
             let file_name = match current_path.file_name() {
                 Some(file_name) => file_name,
                 _ => continue,
@@ -66,6 +67,5 @@ fn split_dir(dir_contents: read_dir::DirContents, args: Cli) {
 /// Otherwise, split the dir.
 fn main() {
     let args = Cli::from_args();
-    let dir_contents = read_dir::read_dir(&args.path);
-    split_dir(dir_contents, args);
+    split_dir(args);
 }
