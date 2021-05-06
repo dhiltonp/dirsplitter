@@ -28,7 +28,7 @@ fn split_dir(dir_contents: read_dir::DirContents, args: Cli) {
             if i % args.images_per_dir == 0 {
                 loop {
                     split_dir_index += 1;
-                    let dir_name = format!("{}-{}", args.subdir_prefix, split_dir_index);
+                    let dir_name = format!("{}{}", args.subdir_prefix, split_dir_index);
 
                     split_dir_path = path::PathBuf::from(&dir_contents.path);
                     split_dir_path.push(dir_name);
