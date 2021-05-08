@@ -1,18 +1,21 @@
 use std::ffi::OsStr;
 use std::{fs, path};
 
-/// Returns true if the path is a .jpg, .jpeg or .png, handling case sensitivity.
+/// Returns true if `file` is a .jpg, .jpeg, .png, .bmp,
+///  .webp, .gif or .tiff,... plus a bunch of raw file
+///  extensions, handling case sensitivity.
 fn is_image(file: &path::Path) -> bool {
-    let image_types = ["jpg", "jpeg", "png"];
+    let image_types = [
+        "jpg", "jpeg", "png", "bmp", "webp", "gif", "tiff", "pef", "dng", "crw", "nef", "cr2",
+        "mrw", "rw2", "orf", "x3f", "arw", "kdc", "nrw", "dcr", "sr2", "raf",
+    ];
 
-    let extension = match file.extension() {
-        Some(extension) => extension.to_ascii_lowercase(),
-        _ => return false,
-    };
-
-    for t in image_types.iter() {
-        if extension == OsStr::new(t) {
-            return true;
+    if let Some(extension) = file.extension() {
+        let extension = extension.to_ascii_lowercase();
+        for t in image_types.iter() {
+            if extension == OsStr::new(t) {
+                return true;
+            }
         }
     }
 
